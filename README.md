@@ -2,7 +2,6 @@ MIPS-Processor
 ==============
 
 ## Instruction Set Reference
-0     5     10    15    20    25      31
 
 ADD	ARITHMETIC ADDITION
 000 000 SSSSS TTTTT DDDDD ----- 100 000
