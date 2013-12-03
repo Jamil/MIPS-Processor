@@ -41,7 +41,7 @@ set_global_assignment -name DEVICE EP2C35F672C6
 set_global_assignment -name TOP_LEVEL_ENTITY outputManagment
 set_global_assignment -name ORIGINAL_QUARTUS_VERSION 13.0
 set_global_assignment -name PROJECT_CREATION_TIME_DATE "12:53:17  NOVEMBER 14, 2013"
-set_global_assignment -name LAST_QUARTUS_VERSION 13.0
+set_global_assignment -name LAST_QUARTUS_VERSION "13.0 SP1"
 set_global_assignment -name PROJECT_OUTPUT_DIRECTORY output_files
 set_global_assignment -name MIN_CORE_JUNCTION_TEMP 0
 set_global_assignment -name MAX_CORE_JUNCTION_TEMP 85
@@ -476,6 +476,9 @@ set_location_assignment PIN_W23 -to GPIO_1[35]
 set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
 set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_ROUTING -section_id Top
 set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
+set_global_assignment -name VERILOG_FILE output_files/alu.v
+set_global_assignment -name VERILOG_FILE output_files/decoder.v
+set_global_assignment -name VERILOG_FILE output_files/execute.v
 set_global_assignment -name VERILOG_FILE Hexadecimal_To_Seven_Segment.v
 set_global_assignment -name VERILOG_FILE ps2_controller.v
 set_global_assignment -name VERILOG_FILE Altera_UP_PS2_Data_In.v
@@ -484,4 +487,15 @@ set_global_assignment -name VERILOG_FILE input_control.v
 set_global_assignment -name VERILOG_FILE Verilog2.v
 set_global_assignment -name QIP_FILE hexaRoom.qip
 set_global_assignment -name QIP_FILE mainMemory.qip
+set_global_assignment -name VERILOG_FILE output_files/inputOutputModules.v
+set_global_assignment -name VERILOG_FILE output_files/fetchInstruction.v
+set_global_assignment -name VERILOG_FILE output_files/storeToMM.v
+set_global_assignment -name VERILOG_FILE output_files/getRDvalue.v
+set_global_assignment -name VERILOG_FILE output_files/readFromMM.v
+set_global_assignment -name VERILOG_FILE output_files/resultManagment.v
+set_global_assignment -name VERILOG_FILE output_files/RegisterDeclare.v
+set_global_assignment -name VERILOG_FILE mainControllerCpu.v
+set_global_assignment -name POWER_PRESET_COOLING_SOLUTION "23 MM HEAT SINK WITH 200 LFPM AIRFLOW"
+set_global_assignment -name POWER_BOARD_THERMAL_MODEL "NONE (CONSERVATIVE)"
+set_global_assignment -name QIP_FILE mainMemoryPreload.qip
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
