@@ -2,7 +2,7 @@ MIPS-Processor
 ==============
 
 ## Instruction Set Reference
-
+```
 ADD	ARITHMETIC ADDITION
 000 000 SSSSS TTTTT DDDDD ----- 100 000
 $D <= $S + $T
@@ -99,7 +99,7 @@ MEM[$S + I] <= $D
 XORI	XOR IMMEDIATE
 001 110 SSSSS DDDDD IIII IIII IIII IIII
 $D <= $S ^ I
-
+```
 ## ALU Opcodes
 ### NO OPERATION
 0000	NO OP
