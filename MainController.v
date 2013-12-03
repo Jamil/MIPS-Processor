@@ -1,11 +1,9 @@
-
-
 module outputManagment
 	(
 		CLOCK_50,						//	On Board 50 MHz
 		VGA_CLK,   						//	VGA Clock
 		VGA_HS,							//	VGA H_SYNC
-		VGA_VS,							//	VGA V_SYNC
+	VGA_VS,							//	VGA V_SYNC
 		VGA_BLANK,						//	VGA BLANK
 		VGA_SYNC,						//	VGA SYNC
 		VGA_R,   						//	VGA Red[9:0]
@@ -27,12 +25,11 @@ module outputManagment
         LEDG,
 		  PS2_CLK,
         PS2_DAT,
-		  
-		  
 	);
+	
 	input [17:0]SW;
 	input [3:0]KEY;
-	output [17:0]LEDR;
+	output reg [17:0]LEDR;
 	output [7:0]LEDG;
 	input	CLOCK_50;				//	50 MHz
 	
@@ -58,24 +55,37 @@ module outputManagment
 	output                [6:0]        HEX7;
 	
 	
+	wire [10:0]addressCPU;
+	wire writeEnableRamCPU;
+	wire [31:0]dataWriteCPU;
+	
+	reg enableCPU;
+	wire acknowledgeCPU;
+	
+	
+	
 	wire [10:0]addressWTR;
-	wire [10:0]NotaddressWTR;
 	wire writeEnableRamWTR;
 	wire [31:0]dataWriteWTR;
-	assign NotaddressWTR=~addressWTR;
+	
+	reg enableWTR;
+	wire acknowledgeWTR;
+	
+	
+	wire [10:0]addressSTR;
+	wire writeEnableRamSTR;
+	wire [31:0]dataWriteSTR;
+	
+	reg enableSTR;
+	wire acknowledgeSTR;
+	
 		
 	wire [10:0]addressDRAW;
-	wire [10:0]NotaddressDRAW;
 	wire writeEnableRamDRAW;
 	wire [31:0]dataWriteDRAW;
-	assign NotaddressDRAW=~addressDRAW;
 	
-	wire [10:0]addressMOD;
-	wire [10:0]NotaddressMOD;
-	assign addressMOD=0;
-	assign NotaddressMOD=~addressMOD;
-	
-	
+	reg enableDRAW;
+	wire acknowledgeDRAW;	
 	
 	reg [10:0]address;
 	reg writeEnableRam;
@@ -91,14 +101,13 @@ module outputManagment
 	reg [10:0]counterAddress_Q;
 	reg [10:0]counterAddress_D;
 
+	wire [3:0]options;
 	
+	assign options[0]=enter;
+	assign options[1]=did_change;
+	assign options[2]=submit;
+	assign options[3]=SW[17];//for debugin
 	
-	reg enableWTR;
-	wire acknowledgeWTR;
-	
-	
-	reg enableDRAW;
-	wire acknowledgeDRAW;
 	
 	always@(*)
 	begin
@@ -113,33 +122,32 @@ module outputManagment
 			address=0;
 			writeEnableRam=0;
 			dataWrite=0;
+			enableSTR<=0;
+			enableCPU<=0;
 			
 			counterAddress_D<=counterAddress_Q;
 			
-			if(enter&~did_change)
-				states_D<=3'b001;
-			else
-			begin
-				if(~enter&did_change)
-					states_D<=3'b100;
-				else
-				begin
-				if(SW[17])///DEBUGIN MUST REMOVE
-					states_D<=3'b011;
-				else
-					states_D<=3'b000;
-				end	
-			end
-		
+			case(options)
+			
+				4'b0001: states_D<=3'b101;//press enter
+				4'b0010: states_D<=3'b100;//after every change
+				4'b0100: states_D<=3'b110;//goes to cpu
+				4'b1000: states_D<=3'b011;//for debugin
+				default: states_D<=3'b000;//goes to 0
+			
+			endcase
+	
 		end
 		
-		3'b001://write to drawing ram using the last ram
+		3'b001://write to high ram 
 		begin
 			wait_D<=0;
 			enableDRAW<=0;
 			enableWTR<=1;
+			enableSTR<=0;
+			enableCPU<=0;
 			
-			address=NotaddressWTR;//last ram
+			address=~addressWTR;//last ram
 			writeEnableRam=writeEnableRamWTR;
 			dataWrite=dataWriteWTR;
 			
@@ -156,12 +164,14 @@ module outputManagment
 		3'b010://draw to vga using last ram
 		begin
 			wait_D<=0;
-			address=NotaddressDRAW;//last ram
+			address=~addressDRAW;//last ram
 			writeEnableRam=0;
 			dataWrite=0;
 			
 			enableDRAW<=1;
 			enableWTR<=0;
+			enableSTR<=0;
+			enableCPU<=0;
 			
 			counterAddress_D<=counterAddress_Q;
 
@@ -189,6 +199,8 @@ module outputManagment
 			
 			enableDRAW<=0;
 			enableWTR<=0;
+			enableSTR<=0;
+			enableCPU<=0;
 			
 			counterAddress_D<=counterAddress_Q;
 
@@ -201,12 +213,14 @@ module outputManagment
 		
 		3'b100://modify ram
 		begin
-			address=NotaddressMOD;
+			address=~0;
 			writeEnableRam=1;
 			dataWrite=data;
 			
 			enableDRAW<=0;
 			enableWTR<=0;
+			enableSTR<=0;
+			enableCPU<=0;
 			
 			counterAddress_D<=counterAddress_Q;
 
@@ -221,11 +235,64 @@ module outputManagment
 				states_D<=3'b100;
 				wait_D<=wait_Q+1;
 			end
+		end
 		
-		
+		3'b101://write to high ram 
+		begin
+			wait_D<=0;
+			enableDRAW<=0;
+			enableWTR<=0;
+			enableCPU<=0;
+
+			
+			enableSTR<=1;
+			
+			address=addressSTR;//last ram
+			writeEnableRam=writeEnableRamSTR;
+			dataWrite=dataWriteSTR;
+
+			
+			if(acknowledgeSTR)
+			begin
+				counterAddress_D<=counterAddress_Q+1;
+				states_D<=3'b001;
+			end
+			else
+			begin
+				states_D<=3'b101;
+				counterAddress_D<=counterAddress_Q;
+			end
 		
 		end
 		
+		
+		3'b110://go to cpu
+		begin
+			wait_D<=0;
+			enableDRAW<=0;
+			enableWTR<=0;
+			enableSTR<=0;
+			
+			enableCPU<=1;
+			
+			address=addressCPU;//last ram
+			writeEnableRam=writeEnableRamCPU;
+			dataWrite=dataWriteCPU;
+
+			
+			if(acknowledgeCPU)
+			begin
+				counterAddress_D<=0;
+				states_D<=3'b010;
+			end
+			else
+			begin
+				states_D<=3'b110;
+			end
+		
+		end
+		
+			
 		endcase
 	
 	end
@@ -249,30 +316,38 @@ module outputManagment
 	wire resetIn;
 	assign resetIn = KEY[0];
 
-	/*
 	
-	assign LEDR[15]=&wait_Q;
+	wire [17:0]LEDR2;
+	assign LEDR2[15]=&wait_Q;
 	
-	assign LEDR[12:10]=states_Q;
+	assign LEDR2[12:10]=states_Q;
 	
-	assign LEDR[5:0]=address[5:0];
+	assign LEDR2[4:0]=address[4:0];
+	assign LEDR2[5]=address[10];
 	
-	assign LEDR[7:6]=wait_Q;
+	assign LEDR2[7:6]=wait_Q;
 	
-	assign LEDR[9]=writeEnableRam;
+	assign LEDR2[9]=writeEnableRam;
+	
 
 	assign LEDG=dataRead[7:0];
-
-	*/
-	assign LEDR=SW;
-
-	mainMemory (address,CLOCK_50,dataWrite,writeEnableRam,dataRead);
+	
+	wire [17:0]LEDR3;
+	assign LEDR3=dataWrite[17:0];
+	
+	always@(*)
+	begin
+		if(SW[16]&~SW[15])
+			LEDR=LEDR2;
+		if(~SW[16]&SW[15])
+			LEDR=LEDR3;
+		if(~SW[16]&~SW[15])
+			LEDR=LEDR1;
+		if(SW[16]&SW[15])
+			LEDR[10:0]=address;
+	end
 	
 	
-	
-		
-	///mainOutPut inst(enablePAINT,acknowledgePAINT,data1,x1,y1m,color1,writeEnable1,CLOCK_50,resetIn);
-	drawToVGA(enableDRAW,acknowledgeDRAW,dataRead,addressDRAW,x,y,color,writeEnable,CLOCK_50,resetIn/*,LEDR,LEDG*/,~KEY[3]);
 	
 	wire enter,submit,did_change;
 	wire [31:0]datafake;
@@ -280,8 +355,12 @@ module outputManagment
 	wire [7:0]LEDRfake;
 	wire [7:0]LEDGfake;
 
-	
-	
+	//acces to ram
+	mainMemoryPreload (address,CLOCK_50,dataWrite,writeEnableRam,dataRead);
+		
+	drawToVGA(enableDRAW,acknowledgeDRAW,dataRead,addressDRAW,x,y,color,writeEnable,CLOCK_50,resetIn);
+
+	//accees to key board
    input_control (
         // Inputs
         CLOCK_50,
@@ -299,8 +378,16 @@ module outputManagment
         LEDRfake,LEDGfake,enter,submit,did_change,data);
 	
 	
-	
+	//writes to high ram
+
 	writeToRam(0,enableWTR,dataRead,acknowledgeWTR, addressWTR,dataWriteWTR,writeEnableRamWTR,CLOCK_50,resetIn);
+	
+	wire [17:0]LEDR1;
+	mainControllerCPU(enableCPU,acknowledgeCPU,dataRead,addressCPU,dataWriteCPU,writeEnableRamCPU,CLOCK_50,resetIn,LEDR1,SW[9:0],~KEY[3]);
+	
+	//wirtes to the low ram
+	wire [17:0]fakeLEDR2;
+	saveToLowRam(enableSTR,acknowledgeSTR,dataRead,counterAddress_Q, addressSTR,dataWriteSTR,writeEnableRamSTR,CLOCK_50,resetIn);
 	
 	// Create an Instance of a VGA controller - "There can be only one!"
 	// Define the number of colours as well as the initial background
