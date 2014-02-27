@@ -1,4 +1,4 @@
-module outputManagment
+module proc
 	(
 		CLOCK_50,						//	On Board 50 MHz
 		VGA_CLK,   						//	VGA Clock
