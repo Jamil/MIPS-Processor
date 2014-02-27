@@ -1,5 +1,15 @@
 MIPS Processor README
 ==============
+## Read First
+
+This is a simple, very basic processor, which accepts commands via a PS/2 keyboard, and prints the output to VGA. If you want to print a hex value, simply load a 32-bit value into one of the 'high' 10 locations in memory. For example, to display the number '1', you could do something like:
+movi r6, 1
+addi r7, r0, -1 
+stw r6, (r7)
+
+See the sample codes for Fibonacci and Factorial for an example.
+
+As of now, this processor ONLY works with the specified input/output peripherals, and lacks support for exceptions, interrupts, and essentially anything other than simple instructions. I do plan on updating this later on though to extend it (so hopefully it can at least run a semi-functional operating system).
 
 ## Instruction Set Reference
 ```
