@@ -13,6 +13,12 @@ See the sample codes for Fibonacci and Factorial for an example.
 
 As of now, this processor ONLY works with the specified input/output peripherals, and lacks support for exceptions, interrupts, and essentially anything other than simple instructions. I do plan on updating this later on though to extend it (so hopefully it can at least run a semi-functional operating system).
 
+## Getting Started
+
+Hook up your DE2 board to a VGA monitor and a PS/2 keyboard. You should see rows of '00000000'; these are the hex instructions which are currently loaded into memory (no-op).
+
+Type in the hex instructions you want to execute, one per line (hit enter to move to the next line), and then press "s" to execute (if SW[9] is on, it steps through each instruction). You can load some programs using a MIF file too, to avoid typing all that in. There are also several debugging modes you can activate with the DE2 switches and view with the LEDR lights (such as the ALU opcodes). You can see these in the MainCPUController module.
+
 ## Instruction Set Reference
 ```
 ADD	ARITHMETIC ADDITION
